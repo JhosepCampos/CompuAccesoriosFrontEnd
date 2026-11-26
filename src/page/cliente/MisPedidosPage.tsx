@@ -23,10 +23,10 @@ export default function MisPedidosPage() {
   const cargarPedidos = () => {
     setCargando(true)
     listarPedidosPorCliente(clienteIdActual)
-      .then((data) => {
-        // Ordenamos para ver los más recientes primero
+      .then((data) => {        
         const ordenados = [...data].sort((a, b) => (b.id ?? 0) - (a.id ?? 0))
         setPedidos(ordenados)
+        window.dispatchEvent(new Event('misPedidosActualizados'))
       })
       .catch((err) => setError(err.message))
       .finally(() => setCargando(false))
@@ -44,7 +44,6 @@ export default function MisPedidosPage() {
 
     setPedidoExpandido(pedidoId)
 
-    // Si aún no hemos consultado los detalles de este pedido, los pedimos al backend
     if (!detallesAbiertos[pedidoId]) {
       try {
         const detalles = await listarDetallesPedido(pedidoId)
@@ -67,6 +66,7 @@ export default function MisPedidosPage() {
       setPedidos((prev) =>
         prev.map((p) => (p.id === pedidoId ? pedidoActualizado : p))
       )
+      window.dispatchEvent(new Event('misPedidosActualizados'))
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al cancelar'
       alert(msg)
@@ -112,7 +112,6 @@ export default function MisPedidosPage() {
         <div className="space-y-4">
           {pedidos.map((pedido) => {
             const id = pedido.id!
-            // Regla de negocio: solo puede cancelar si aún no fue entregado (ni ya está cancelado)
             const puedeCancelar =
               pedido.estado !== 'ENTREGADO' && pedido.estado !== 'CANCELADO'
             const estaAbierto = pedidoExpandido === id

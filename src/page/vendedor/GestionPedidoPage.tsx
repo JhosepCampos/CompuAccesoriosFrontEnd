@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import {
-  obtenerPedidoPorId,
   listarDetallesPedido,
   cambiarEstadoPedido,
+  obtenerTodosLosPedidos,
 } from '../../service/pedidoService'
 import type { PedidoDto, DetallePedidoDto } from '../../type/pedido'
 import { obtenerSesion } from '../../service/usuarioService'
@@ -23,51 +23,34 @@ export default function GestionPedidosPage() {
   const usuarioDespachoId = usuarioLogueado?.id ?? 0
 
 
-  // Carga los pedidos iniciales consultando GET /pedidos/{id} del 1 al 10
   const cargarBandejaInicial = async () => {
     setCargando(true)
-    const ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    const resultados = await Promise.allSettled(
-      ids.map((id) => obtenerPedidoPorId(id))
-    )
-    const encontrados = resultados
-      .filter(
-        (r): r is PromiseFulfilledResult<PedidoDto> => r.status === 'fulfilled'
-      )
-      .map((r) => r.value)
-      .sort((a, b) => (b.id ?? 0) - (a.id ?? 0))
-
-    setPedidos(encontrados)
-    setCargando(false)
+    setError(null)
+    try {
+      const data = await obtenerTodosLosPedidos()
+      setPedidos(data)
+      window.dispatchEvent(new Event('pedidosActualizados'))
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al cargar pedidos')
+    } finally {
+      setCargando(false)
+    }
   }
 
   useEffect(() => {
     cargarBandejaInicial()
   }, [])
 
-  const handleBuscarPorId = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const idNum = Number(busquedaId)
-    if (!idNum) return
+  const pedidosFiltrados = pedidos.filter((p) => {
+    const texto = busquedaId.trim().toLowerCase()
+    if (!texto) return true
 
-    setError(null)
-    setMensajeExito(null)
-    try {
-      const pedido = await obtenerPedidoPorId(idNum)
-      setPedidos((prev) => {
-        const existe = prev.some((p) => p.id === pedido.id)
-        return existe
-          ? prev.map((p) => (p.id === pedido.id ? pedido : p))
-          : [pedido, ...prev]
-      })
-      setBusquedaId('')
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Pedido no encontrado'
-      setError(msg)
-    }
-  }
+    return (
+      String(p.id).includes(texto) ||
+      (p.cliente?.nombre?.toLowerCase().includes(texto) ?? false)
+    )
+  })
 
-  // Regla de negocio: Transición secuencial obligatoria
   const obtenerSiguientePaso = (estado?: string) => {
     switch (estado) {
       case 'PENDIENTE':
@@ -120,6 +103,7 @@ export default function GestionPedidosPage() {
       } else {
         setMensajeExito(`Pedido #${pedidoId} actualizado a ${nuevoEstado}.`)
       }
+      window.dispatchEvent(new Event('pedidosActualizados'))
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al actualizar estado'
       setError(msg)
@@ -173,23 +157,35 @@ export default function GestionPedidosPage() {
           </p>
         </div>
 
-        {/* Buscador rápido por ID (GET /pedidos/{id}) */}
-        <form onSubmit={handleBuscarPorId} className="flex gap-2">
+                <div className="flex gap-2">
           <input
-            type="number"
-            min={1}
-            placeholder="Buscar N° Pedido..."
+            type="text"
+            placeholder="Buscar N° pedido o cliente..."
             value={busquedaId}
             onChange={(e) => setBusquedaId(e.target.value)}
-            className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white w-44 focus:outline-none focus:border-blue-500"
+            className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white w-56 focus:outline-none focus:border-blue-500"
           />
+
+          {busquedaId && (
+            <button
+              type="button"
+              onClick={() => setBusquedaId('')}
+              className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer"
+            >
+              Limpiar
+            </button>
+          )}
+
           <button
-            type="submit"
-            className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer"
+            type="button"
+            onClick={cargarBandejaInicial}
+            disabled={cargando}
+            className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer disabled:opacity-50"
           >
-            Buscar
+            {cargando ? 'Actualizando...' : 'Actualizar'}
           </button>
-        </form>
+        </div>
+
       </div>
 
       {mensajeExito && (
@@ -208,13 +204,13 @@ export default function GestionPedidosPage() {
         <p className="text-center text-slate-500 py-10">
           Cargando bandeja de pedidos...
         </p>
-      ) : pedidos.length === 0 ? (
+      ) : pedidosFiltrados.length === 0 ? (
         <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-center text-slate-500">
           No hay pedidos en curso. Usa el buscador superior para consultar un ID.
         </div>
       ) : (
         <div className="space-y-4">
-          {pedidos.map((pedido) => {
+          {pedidosFiltrados.map((pedido) => {
             const id = pedido.id!
             const siguiente = obtenerSiguientePaso(pedido.estado)
             const estaProcesando = procesandoId === id

@@ -16,6 +16,7 @@ import ReporteVentasPage from '../page/admin/ReporteVentaPage'
 import LoginPage from '../page/auth/LoginPage'
 import RegistroPage from '../page/auth/RegistroPage'
 import UsuarioPage from '../page/admin/UsuarioPage'
+import { listarPedidosPorCliente, obtenerCarrito, obtenerTodosLosPedidos } from '../service/pedidoService'
 
 function RutaProtegida({
     rolesPermitidos,
@@ -61,6 +62,63 @@ export default function AppRouter() {
         window.location.replace('/login')
     }
 
+    const [cantidadCarrito, setCantidadCarrito] = useState<number>(0)
+
+    const actualizarContadorCarrito = () => {
+        setCantidadCarrito(obtenerCarrito().length)
+    }
+
+    useEffect(() => {
+        actualizarContadorCarrito()
+        window.addEventListener('carritoActualizado', actualizarContadorCarrito)
+        return () => window.removeEventListener('carritoActualizado', actualizarContadorCarrito)
+    }, [])
+
+    const [pedidosPendientes, setPedidosPendientes] = useState<number>(0)
+
+    const actualizarContadorPedidos = async () => {       
+        if (rol !== 'VENDEDOR' && rol !== 'ADMINISTRADOR') return
+
+        try {
+            const lista = await obtenerTodosLosPedidos()            
+            const activos = lista.filter(
+                (p) => p.estado !== 'ENTREGADO' && p.estado !== 'CANCELADO'
+            ).length
+            setPedidosPendientes(activos)
+        } catch {
+            setPedidosPendientes(0)
+        }
+    }
+
+    useEffect(() => {
+        actualizarContadorPedidos()
+        window.addEventListener('pedidosActualizados', actualizarContadorPedidos)
+        return () => window.removeEventListener('pedidosActualizados', actualizarContadorPedidos)
+    }, [rol])
+
+    const [misPedidosPendientes, setMisPedidosPendientes] = useState<number>(0)
+
+    const actualizarContadorMisPedidos = async () => {
+        if (rol !== 'CLIENTE' || !usuario?.id) return
+
+        try {
+            const lista = await listarPedidosPorCliente(usuario.id)
+            const activos = lista.filter(
+                (p) => p.estado !== 'ENTREGADO' && p.estado !== 'CANCELADO'
+            ).length
+            setMisPedidosPendientes(activos)
+        } catch {
+            setMisPedidosPendientes(0)
+        }
+    }
+
+    useEffect(() => {
+        actualizarContadorMisPedidos()
+        window.addEventListener('misPedidosActualizados', actualizarContadorMisPedidos)
+        return () => window.removeEventListener('misPedidosActualizados', actualizarContadorMisPedidos)
+    }, [rol, usuario?.id])
+
+
     return (
         <BrowserRouter>
             {/* Menú superior dinámico según el rol */}
@@ -76,12 +134,23 @@ export default function AppRouter() {
                             <Link to="/catalogo" className="hover:text-blue-400 transition">
                                 Catalogo
                             </Link>
-                            <Link to="/carrito" className="hover:text-blue-400 transition">
-                                Carrito
+                            <Link to="/carrito" className="hover:text-blue-400 transition flex items-center gap-1.5">
+                                <span>Carrito</span>
+                                {cantidadCarrito > 0 && (
+                                    <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                        {cantidadCarrito}
+                                    </span>
+                                )}
                             </Link>
+
                             {rol === 'CLIENTE' && (
-                                <Link to="/mi-pedido" className="hover:text-blue-400 transition">
-                                    Mi Pedido
+                                <Link to="/mi-pedido" className="hover:text-blue-400 transition flex items-center gap-1.5">
+                                    <span>Mi Pedido</span>
+                                    {misPedidosPendientes > 0 && (
+                                        <span className="bg-amber-500 text-slate-950 text-xs font-bold px-2 py-0.5 rounded-full">
+                                            {misPedidosPendientes}
+                                        </span>
+                                    )}
                                 </Link>
                             )}
                         </>
@@ -93,9 +162,15 @@ export default function AppRouter() {
                             <Link to="/mostrador" className="hover:text-blue-400 transition">
                                 Mostrador
                             </Link>
-                            <Link to="/gestion-pedido" className="hover:text-blue-400 transition">
-                                Gestión Pedido
+                            <Link to="/gestion-pedido" className="hover:text-blue-400 transition flex items-center gap-1.5">
+                                <span>Gestión Pedido</span>
+                                {pedidosPendientes > 0 && (
+                                    <span className="bg-amber-500 text-slate-950 text-xs font-bold px-2 py-0.5 rounded-full">
+                                        {pedidosPendientes}
+                                    </span>
+                                )}
                             </Link>
+
                         </>
                     )}
 

@@ -34,7 +34,6 @@ export const listarUsuarios = async (): Promise<UsuarioDto[]> => {
   return res.json()
 }
 
-// --- Manejo de Sesión en LocalStorage ---
 export const guardarSesion = (usuario: UsuarioDto): void => {
   localStorage.setItem(SESSION_KEY, JSON.stringify(usuario))
 }

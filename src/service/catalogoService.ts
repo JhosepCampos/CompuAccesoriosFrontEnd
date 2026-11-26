@@ -20,7 +20,6 @@ export const obtenerMarcas = async (): Promise<Marca[]> => {
   return res.json()
 }
 
-// --- Métodos de Administración para ProductoPage ---
 export const obtenerTodosProductos = async (): Promise<Producto[]> => {
   const res = await fetch(`${API_URL}/productos/todos`)
   if (!res.ok) throw new Error('Error al cargar todos los productos')
@@ -68,7 +67,6 @@ export const desactivarProducto = async (id: number): Promise<void> => {
   }
 }
 
-// --- Métodos para CategoriaMarcaPage ---
 export const registrarCategoria = async (
   nombre: string
 ): Promise<Categoria> => {

@@ -10,8 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import { obtenerSesion } from '../../service/usuarioService'
 
 export default function CarritoPage() {
-    const [items, setItems] = useState<ItemCarrito[]>([])
-    // Generamos el UUID una sola vez al cargar el carrito para garantizar idempotencia si hay doble clic
+    const [items, setItems] = useState<ItemCarrito[]>([])    
     const [tokenIdempotencia, setTokenIdempotencia] = useState<string>(() =>
         crypto.randomUUID()
     )
@@ -26,8 +25,7 @@ export default function CarritoPage() {
         setItems(obtenerCarrito())
     }, [])
 
-    const actualizarCantidad = (productoId: number, nuevaCantidad: number) => {
-        // Regla de negocio: cantidades modificables (1 a 99)
+    const actualizarCantidad = (productoId: number, nuevaCantidad: number) => {        
         const cantidadValida = Math.max(1, Math.min(99, nuevaCantidad || 1))
         const actualizado = items.map((item) =>
             item.producto.id === productoId
@@ -52,7 +50,6 @@ export default function CarritoPage() {
     const handleConfirmarPedido = async () => {
         if (items.length === 0 || enviando) return
 
-        // Bloquea la compra si no hay sesión iniciada
         if (!usuarioLogueado || !usuarioLogueado.id) {
             alert('Debes iniciar sesión para confirmar tu pedido.')
             navigate('/login')
@@ -80,8 +77,8 @@ export default function CarritoPage() {
         try {
             const pedidoCreado = await confirmarPedido(payload)
             limpiarCarrito()
+            window.dispatchEvent(new Event('misPedidosActualizados'))
             setItems([])
-            // Regeneramos un nuevo token solo cuando el pedido ya fue confirmado con éxito
             setTokenIdempotencia(crypto.randomUUID())
             setMensajeExito(
                 `¡Pedido #${pedidoCreado.id} confirmado! Tienes 48 horas para completar la compra.`

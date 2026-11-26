@@ -1,4 +1,4 @@
-import type { VentaMostradorRequest, VentaDto } from '../type/venta'
+import type { VentaMostradorRequest, VentaDto, DetalleVentaDto } from '../type/venta'
 
 const API_URL = 'http://localhost:8080/ventas'
 
@@ -12,19 +12,26 @@ export const registrarVentaMostrador = async (
   })
 
   if (!res.ok) {
-    const errorTexto = await res.text()
-    throw new Error(errorTexto || 'Error al registrar la venta en mostrador')
+    let mensaje = 'No se pudo procesar la venta'
+    try {
+      const errorData = await res.json()
+      if (errorData.message) mensaje = errorData.message
+    } catch {
+      const texto = await res.text()
+      if (texto) mensaje = texto
+    }
+    throw new Error(mensaje)
   }
+
 
   return res.json()
 }
 
-// --- Método para ReporteVentasPage ---
 export const obtenerReporteVentas = async (
   desde: string,
   hasta: string
 ): Promise<VentaDto[]> => {
-  // Spring Boot espera ISO.DATE_TIME (ej. 2026-11-25T00:00:00)
+
   const desdeIso = `${desde}T00:00:00`
   const hastaIso = `${hasta}T23:59:59`
 
@@ -39,5 +46,15 @@ export const obtenerReporteVentas = async (
     throw new Error(errorTexto || 'Error al obtener el reporte de ventas')
   }
 
+  return res.json()
+}
+
+export const listarDetallesVenta = async (
+  ventaId: number
+): Promise<DetalleVentaDto[]> => {
+  const res = await fetch(`${API_URL}/${ventaId}/detalles`)
+  if (!res.ok) {
+    throw new Error('Error al cargar los detalles de la venta')
+  }
   return res.json()
 }

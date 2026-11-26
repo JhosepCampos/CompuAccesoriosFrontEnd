@@ -16,12 +16,11 @@ export default function CatalogoPage() {
   const [cargando, setCargando] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [busqueda, setBusqueda] = useState<string>('')
-
+  const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
     Promise.all([obtenerProductos(), obtenerCategorias(), obtenerMarcas()])
       .then(([dataProductos, dataCategorias, dataMarcas]) => {
-        // Regla de negocio: solo listar registros activos
         setProductos(dataProductos.filter((p) => p.activo))
         setCategorias(dataCategorias.filter((c) => c.activo))
         setMarcas(dataMarcas.filter((m) => m.activo))
@@ -47,8 +46,12 @@ export default function CatalogoPage() {
   })
 
   const handleAgregarCarrito = (producto: Producto) => {
-    agregarAlCarrito(producto)
-    alert(`"${producto.nombre}" se agregó al carrito`)
+    agregarAlCarrito(producto)    
+
+    setToast(`"${producto.nombre}" se agregó al carrito`)
+    setTimeout(() => {
+      setToast((prev) => (prev === `"${producto.nombre}" se agregó al carrito` ? null : prev))
+    }, 2500)
   }
 
   if (cargando) {
@@ -112,19 +115,17 @@ export default function CatalogoPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {productosFiltrados.map((producto) => {
-            // Si el backend aún no manda stockFisico/reservado, verificamos si vienen definidos
             const tieneDatosStock =
               producto.stockFisico !== undefined && producto.reservado !== undefined
             const stockDisponible = tieneDatosStock
               ? producto.stockFisico! - producto.reservado!
               : null
             const sinStock = tieneDatosStock ? stockDisponible! <= 0 : false
-
-            // Si imagen es "general" o vacía, mostramos imagen por defecto
+            
             const urlImagen =
               producto.imagen && producto.imagen !== 'general'
                 ? producto.imagen
-                : 'https://placeholder.com'
+                : 'https://placehold.co'
 
             return (
               <div
@@ -135,6 +136,10 @@ export default function CatalogoPage() {
                   <img
                     src={urlImagen}
                     alt={producto.nombre}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null
+                      e.currentTarget.src = 'https://placehold.co'
+                    }}
                     className="w-full h-44 object-cover bg-slate-100"
                   />
 
@@ -180,8 +185,8 @@ export default function CatalogoPage() {
                     disabled={sinStock}
                     onClick={() => handleAgregarCarrito(producto)}
                     className={`w-full py-2 px-4 rounded-lg font-medium transition ${sinStock
-                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
                       }`}
                   >
                     {sinStock ? 'Sin stock' : 'Agregar al Carrito'}
@@ -190,6 +195,12 @@ export default function CatalogoPage() {
               </div>
             )
           })}
+        </div>
+      )}
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-3 bg-emerald-600 text-white px-5 py-3.5 rounded-xl shadow-lg">
+          <span className="font-bold">✓</span>
+          <span className="text-sm font-medium">{toast}</span>
         </div>
       )}
     </div>

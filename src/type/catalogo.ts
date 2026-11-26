@@ -21,7 +21,6 @@ export interface Producto {
   stockMinimo: number
   activo: boolean
   imagen: string
-  // Opcionales por si luego los agregas desde InventarioDto:
   stockFisico?: number
   reservado?: number
 }

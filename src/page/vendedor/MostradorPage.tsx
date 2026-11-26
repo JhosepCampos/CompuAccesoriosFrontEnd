@@ -167,10 +167,21 @@ export default function MostradorPage() {
       )}
 
       {error && (
-        <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-lg">
-          {error}
+        <div className="flex items-center justify-between bg-amber-50 border border-amber-300 border-l-4 border-l-amber-500 text-amber-900 p-4 rounded-lg shadow-sm">
+          <div>
+            <span className="font-bold mr-1.5">Stock insuficiente:</span>
+            <span>{error.replace('Stock insuficiente para venta en mostrador de: ', '')}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="text-amber-600 hover:text-amber-800 font-bold px-2 cursor-pointer"
+          >
+            ✕
+          </button>
         </div>
       )}
+
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-7 bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">

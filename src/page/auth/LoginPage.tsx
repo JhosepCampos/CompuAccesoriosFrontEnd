@@ -23,7 +23,6 @@ export default function LoginPage() {
       const usuario = await loginUsuario(correo.trim(), password)
       guardarSesion(usuario)
 
-      // Redirección inteligente según el rol del usuario
       const rolNombre = usuario.rol?.nombre?.toUpperCase()
       if (rolNombre === 'ADMINISTRADOR') {
         navigate('/producto')
@@ -33,7 +32,6 @@ export default function LoginPage() {
         navigate('/catalogo')
       }
 
-      // Recargamos para que la barra de navegación actualice el nombre/rol del usuario
       window.location.reload()
     } catch (err: unknown) {
       const msg =

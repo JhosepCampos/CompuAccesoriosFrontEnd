@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { obtenerReporteVentas } from '../../service/ventaService'
-import type { VentaDto } from '../../type/venta'
+import { Fragment, useEffect, useState } from 'react'
+import { listarDetallesVenta, obtenerReporteVentas } from '../../service/ventaService'
+import type { DetalleVentaDto, VentaDto } from '../../type/venta'
 
 export default function ReporteVentasPage() {
     const obtenerFechaHoyLocal = () => {
@@ -16,6 +16,27 @@ export default function ReporteVentasPage() {
     const [cargando, setCargando] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
 
+    const [ventaExpandida, setVentaExpandida] = useState<number | null>(null)
+    const [detallesMap, setDetallesMap] = useState<Record<number, DetalleVentaDto[]>>({})
+
+    const toggleDetalles = async (ventaId: number) => {
+        if (ventaExpandida === ventaId) {
+            setVentaExpandida(null)
+            return
+        }
+
+        setVentaExpandida(ventaId)
+
+        if (!detallesMap[ventaId]) {
+            try {
+                const detalles = await listarDetallesVenta(ventaId)
+                setDetallesMap((prev) => ({ ...prev, [ventaId]: detalles }))
+            } catch (err) {
+                console.error(err)
+            }
+        }
+    }
+
     const consultarReporte = async () => {
         if (!fechaDesde || !fechaHasta) {
             setError('Selecciona ambas fechas (Desde y Hasta).')
@@ -29,8 +50,7 @@ export default function ReporteVentasPage() {
         setCargando(true)
         setError(null)
         try {
-            const data = await obtenerReporteVentas(fechaDesde, fechaHasta)
-            // Ordenamos de la venta más reciente a la más antigua
+            const data = await obtenerReporteVentas(fechaDesde, fechaHasta)            
             const ordenadas = [...data].sort((a, b) => (b.id ?? 0) - (a.id ?? 0))
             setVentas(ordenadas)
         } catch (err: unknown) {
@@ -51,7 +71,6 @@ export default function ReporteVentasPage() {
         consultarReporte()
     }
 
-    // Totales calculados para tarjetas resumen
     const totalRecaudado = ventas.reduce(
         (acc, v) => acc + Number(v.total ?? 0),
         0
@@ -154,7 +173,6 @@ export default function ReporteVentasPage() {
                 </div>
             </div>
 
-            {/* Tabla de Ventas */}
             {cargando ? (
                 <p className="text-center text-slate-500 py-10">
                     Generando reporte de ventas...
@@ -170,53 +188,119 @@ export default function ReporteVentasPage() {
                                 <th className="p-4">Cliente</th>
                                 <th className="p-4">Vendedor Responsable</th>
                                 <th className="p-4 text-right">Total</th>
+                                <th className="p-4 text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200">
                             {ventas.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="p-6 text-center text-slate-400">
+                                    <td colSpan={7} className="p-6 text-center text-slate-400">
                                         No se encontraron ventas en el rango de fechas seleccionado.
                                     </td>
                                 </tr>
                             ) : (
                                 ventas.map((venta) => {
+                                    const id = venta.id!
                                     const esPedidoOnline = Boolean(venta.pedido)
+                                    const estaAbierto = ventaExpandida === id
+                                    const detalles = detallesMap[id]
 
                                     return (
-                                        <tr key={venta.id} className="hover:bg-slate-50">
-                                            <td className="p-4 font-mono font-semibold text-slate-700">
-                                                #{venta.id}
-                                            </td>
-                                            <td className="p-4 text-slate-600">
-                                                {venta.fecha
-                                                    ? new Date(venta.fecha).toLocaleString()
-                                                    : '-'}
-                                            </td>
-                                            <td className="p-4">
-                                                {esPedidoOnline ? (
-                                                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                                                        Pedido Online #{venta.pedido?.id}
-                                                    </span>
-                                                ) : (
-                                                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                                                        {venta.tipo || 'Mostrador'}
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="p-4 text-slate-700">
-                                                {venta.cliente?.nombre || 'Público General'}
-                                            </td>
-                                            <td className="p-4 font-medium text-slate-800">
-                                                {venta.vendedor?.nombre ||
-                                                    (venta.vendedor?.id
-                                                        ? `Usuario #${venta.vendedor.id}`
-                                                        : '-')}
-                                            </td>
-                                            <td className="p-4 text-right font-bold text-slate-900">
-                                                S/ {Number(venta.total ?? 0).toFixed(2)}
-                                            </td>
-                                        </tr>
+                                        <Fragment key={id}>
+                                            <tr className="hover:bg-slate-50">
+                                                <td className="p-4 font-mono font-semibold text-slate-700">
+                                                    #{id}
+                                                </td>
+                                                <td className="p-4 text-slate-600">
+                                                    {venta.fecha
+                                                        ? new Date(venta.fecha).toLocaleString()
+                                                        : '-'}
+                                                </td>
+                                                <td className="p-4">
+                                                    {esPedidoOnline ? (
+                                                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                                            Pedido Online #{venta.pedido?.id}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                                            {venta.tipo || 'Mostrador'}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="p-4 text-slate-700">
+                                                    {venta.cliente?.nombre || 'Público General'}
+                                                </td>
+                                                <td className="p-4 font-medium text-slate-800">
+                                                    {venta.vendedor?.nombre ||
+                                                        (venta.vendedor?.id
+                                                            ? `Usuario #${venta.vendedor.id}`
+                                                            : '-')}
+                                                </td>
+                                                <td className="p-4 text-right font-bold text-slate-900">
+                                                    S/ {Number(venta.total ?? 0).toFixed(2)}
+                                                </td>
+                                                <td className="p-4 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleDetalles(id)}
+                                                        className="px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-lg hover:bg-slate-100 text-slate-700 cursor-pointer"
+                                                    >
+                                                        {estaAbierto ? 'Ocultar Ítems' : 'Ver Ítems'}
+                                                    </button>
+                                                </td>
+                                            </tr>
+
+                                            {estaAbierto && (
+                                                <tr className="bg-slate-50">
+                                                    <td colSpan={7} className="p-4 border-t border-slate-200">
+                                                        {!detalles ? (
+                                                            <p className="text-xs text-slate-500">
+                                                                Cargando productos vendidos...
+                                                            </p>
+                                                        ) : detalles.length === 0 ? (
+                                                            <p className="text-xs text-slate-500">
+                                                                Esta venta no tiene ítems registrados.
+                                                            </p>
+                                                        ) : (
+                                                            <div className="bg-white rounded-lg border border-slate-200 p-3">
+                                                                <table className="w-full text-left text-xs">
+                                                                    <thead className="text-slate-500 border-b border-slate-200">
+                                                                        <tr>
+                                                                            <th className="py-2 px-2">SKU</th>
+                                                                            <th className="py-2 px-2">Producto</th>
+                                                                            <th className="py-2 px-2 text-center">Cantidad</th>
+                                                                            <th className="py-2 px-2 text-right">Precio Unit.</th>
+                                                                            <th className="py-2 px-2 text-right">Subtotal</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody className="divide-y divide-slate-100">
+                                                                        {detalles.map((det) => (
+                                                                            <tr key={det.id}>
+                                                                                <td className="py-2 px-2 font-mono text-slate-500">
+                                                                                    {det.producto?.sku}
+                                                                                </td>
+                                                                                <td className="py-2 px-2 font-medium text-slate-800">
+                                                                                    {det.producto?.nombre}
+                                                                                </td>
+                                                                                <td className="py-2 px-2 text-center font-bold">
+                                                                                    {det.cantidad}
+                                                                                </td>
+                                                                                <td className="py-2 px-2 text-right">
+                                                                                    S/ {Number(det.precio).toFixed(2)}
+                                                                                </td>
+                                                                                <td className="py-2 px-2 text-right font-semibold text-slate-900">
+                                                                                    S/ {(Number(det.precio) * det.cantidad).toFixed(2)}
+                                                                                </td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </Fragment>
                                     )
                                 })
                             )}

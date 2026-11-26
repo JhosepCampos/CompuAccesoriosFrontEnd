@@ -11,7 +11,6 @@ import type { Producto } from '../type/catalogo'
 const API_URL = 'http://localhost:8080/pedidos'
 const STORAGE_KEY = 'compu_accesorios_carrito'
 
-// --- Manejo del Carrito en LocalStorage ---
 export const obtenerCarrito = (): ItemCarrito[] => {
   const data = localStorage.getItem(STORAGE_KEY)
   return data ? JSON.parse(data) : []
@@ -27,18 +26,19 @@ export const agregarAlCarrito = (producto: Producto): void => {
     carrito.push({ producto, cantidad: 1 })
   }
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(carrito))
+  guardarCarrito(carrito)
 }
 
 export const guardarCarrito = (carrito: ItemCarrito[]): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(carrito))
+   window.dispatchEvent(new Event('carritoActualizado'))
 }
 
 export const limpiarCarrito = (): void => {
   localStorage.removeItem(STORAGE_KEY)
+   window.dispatchEvent(new Event('carritoActualizado'))
 }
 
-// --- Consumo API Backend ---
 export const confirmarPedido = async (
   request: ConfirmarPedidoRequest
 ): Promise<PedidoDto> => {
@@ -76,7 +76,7 @@ export const cancelarPedido = async (
   pedidoId: number,
   usuarioId: number
 ): Promise<PedidoDto> => {
-  // Tu PedidoController pide estado y usuarioId como @RequestParam
+
   const res = await fetch(
     `${API_URL}/${pedidoId}/estado?estado=CANCELADO&usuarioId=${usuarioId}`,
     { method: 'PATCH' }
@@ -88,7 +88,6 @@ export const cancelarPedido = async (
   return res.json()
 }
 
-// --- Nuevos métodos para GestionPedidosPage ---
 export const obtenerPedidoPorId = async (id: number): Promise<PedidoDto> => {
   const res = await fetch(`${API_URL}/${id}`)
   if (!res.ok) throw new Error(`No se encontró el pedido #${id}`)
@@ -107,6 +106,14 @@ export const cambiarEstadoPedido = async (
   if (!res.ok) {
     const errorTexto = await res.text()
     throw new Error(errorTexto || 'Error al cambiar el estado del pedido')
+  }
+  return res.json()
+}
+
+export const obtenerTodosLosPedidos = async (): Promise<PedidoDto[]> => {
+  const res = await fetch(`${API_URL}`)
+  if (!res.ok) {
+    throw new Error('Error al cargar los pedidos')
   }
   return res.json()
 }

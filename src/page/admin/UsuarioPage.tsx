@@ -13,7 +13,6 @@ export default function UsuarioPage() {
   const [error, setError] = useState<string | null>(null)
   const [mensajeExito, setMensajeExito] = useState<string | null>(null)
 
-  // Estados del Modal de Nuevo Usuario
   const [modalAbierto, setModalAbierto] = useState<boolean>(false)
   const [nombre, setNombre] = useState<string>('')
   const [correo, setCorreo] = useState<string>('')
@@ -47,7 +46,7 @@ export default function UsuarioPage() {
     setNombre('')
     setCorreo('')
     setPassword('')
-    // Por defecto preseleccionamos VENDEDOR (id: 2) o el primer rol disponible
+  
     const rolVendedor = roles.find((r) => r.nombre.toUpperCase() === 'VENDEDOR')
     setRolId(rolVendedor ? String(rolVendedor.id) : roles[0]?.id ? String(roles[0].id) : '')
     setError(null)

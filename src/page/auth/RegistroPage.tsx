@@ -27,7 +27,7 @@ export default function RegistroPage() {
     setError(null)
 
     try {
-      // Regla de negocio: registro de nuevos clientes con rol.id = 3
+
       const nuevoCliente = await registrarUsuario({
         nombre: nombre.trim(),
         correo: correo.trim(),
