@@ -20,17 +20,26 @@ export default function MisPedidosPage() {
   const clienteIdActual = usuarioLogueado?.id ?? 0
 
 
-  const cargarPedidos = () => {
+    const cargarPedidos = () => {
     setCargando(true)
+    setError(null)
     listarPedidosPorCliente(clienteIdActual)
       .then((data) => {        
         const ordenados = [...data].sort((a, b) => (b.id ?? 0) - (a.id ?? 0))
         setPedidos(ordenados)
         window.dispatchEvent(new Event('misPedidosActualizados'))
       })
-      .catch((err) => setError(err.message))
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Error al cargar tus pedidos'
+        setError(
+          msg === 'Failed to fetch'
+            ? 'No pudimos cargar tus pedidos en este momento. Intenta nuevamente.'
+            : msg
+        )
+      })
       .finally(() => setCargando(false))
   }
+
 
   useEffect(() => {
     cargarPedidos()
@@ -49,8 +58,13 @@ export default function MisPedidosPage() {
         const detalles = await listarDetallesPedido(pedidoId)
         setDetallesAbiertos((prev) => ({ ...prev, [pedidoId]: detalles }))
       } catch (err: unknown) {
+        setPedidoExpandido(null)
         const msg = err instanceof Error ? err.message : 'Error al ver detalles'
-        setError(msg)
+        setError(
+          msg === 'Failed to fetch'
+            ? 'No hay conexión con el servidor para ver el detalle del pedido.'
+            : msg
+        )
       }
     }
   }
@@ -69,7 +83,11 @@ export default function MisPedidosPage() {
       window.dispatchEvent(new Event('misPedidosActualizados'))
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al cancelar'
-      alert(msg)
+      setError(
+        msg === 'Failed to fetch'
+          ? 'No hay conexión con el servidor. No se pudo cancelar el pedido.'
+          : msg
+      )
     }
   }
 
@@ -104,7 +122,7 @@ export default function MisPedidosPage() {
         </div>
       )}
 
-      {pedidos.length === 0 ? (
+      {error && pedidos.length === 0 ? null : pedidos.length === 0 ? (
         <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-center text-slate-500">
           Aún no tienes pedidos registrados.
         </div>

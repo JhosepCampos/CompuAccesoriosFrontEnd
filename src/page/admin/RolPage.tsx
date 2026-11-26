@@ -9,18 +9,24 @@ export default function RolPage() {
   useEffect(() => {
     listarRoles()
       .then((data) => setRoles(data))
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        const msg =
+          err.message === 'Failed to fetch'
+            ? 'No hay conexión con el servidor en este momento. Intenta más tarde.'
+            : err.message
+        setError(msg)
+      })
   }, [])
 
   return (
     <div>
       <h2 className="text-2xl font-bold text-slate-800 mb-4">Lista de Roles</h2>
 
-      {error && (
-        <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
-          Error de conexión (revisa CORS o que el backend esté encendido): {error}
+      {error ? (
+        <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-lg mb-4">
+          {error}
         </div>
-      )}
+      ) : (
 
       <div className="overflow-x-auto bg-white rounded-lg shadow">
         <table className="w-full text-left border-collapse">
@@ -40,6 +46,7 @@ export default function RolPage() {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   )
 }

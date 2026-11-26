@@ -32,7 +32,11 @@ export default function UsuarioPage() {
       setRoles(dataRoles)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al cargar usuarios'
-      setError(msg)
+      setError(
+        msg === 'Failed to fetch'
+          ? 'No hay conexión con el servidor en este momento. Intenta más tarde.'
+          : msg
+      )
     } finally {
       setCargando(false)
     }
@@ -95,7 +99,11 @@ export default function UsuarioPage() {
       cerrarModal()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al crear usuario'
-      setError(msg)
+      setError(
+        msg === 'Failed to fetch'
+          ? 'No hay conexión con el servidor en este momento. Intenta más tarde.'
+          : msg
+      )
     } finally {
       setGuardando(false)
     }
@@ -159,6 +167,7 @@ export default function UsuarioPage() {
           <button
             type="button"
             onClick={abrirModalNuevo}
+            disabled={cargando || Boolean(error && !modalAbierto)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition"
           >
             + Nuevo Usuario
@@ -182,7 +191,7 @@ export default function UsuarioPage() {
         <p className="text-center text-slate-500 py-10">
           Cargando lista de usuarios...
         </p>
-      ) : (
+      ) : error && !modalAbierto ? null : (
         <div className="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200">
           <table className="w-full text-left border-collapse text-sm">
             <thead className="bg-slate-800 text-white">

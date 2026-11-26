@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { obtenerProductos } from '../../service/catalogoService'
 import {
-    consultarInventarioPorProducto,
+    obtenerTodoElInventario,
     registrarEntradaInventario,
 } from '../../service/inventarioService'
 import type { Producto } from '../../type/catalogo'
@@ -33,25 +33,35 @@ export default function InventarioPage() {
         setCargando(true)
         setError(null)
         try {
-            const productos = await obtenerProductos()
-            const promesas = productos.map(async (prod) => {
-                try {
-                    return await consultarInventarioPorProducto(prod.id)
-                } catch {
-                    return {
+            const [productos, listaInventarios] = await Promise.all([
+                obtenerProductos(),
+                obtenerTodoElInventario(),
+            ])
+
+            const mapaInventario = new Map(
+                listaInventarios.map((inv) => [inv.producto.id, inv])
+            )
+
+            const listaCompleta: InventarioDto[] = productos.map((prod) => {
+                const invExistente = mapaInventario.get(prod.id)
+                return invExistente
+                    ? { ...invExistente, productoId: prod.id }
+                    : {
                         productoId: prod.id,
                         producto: prod,
                         stockFisico: 0,
                         reservado: 0,
-                    } as InventarioDto
-                }
+                    }
             })
 
-            const listaCompleta = await Promise.all(promesas)
             setInventarios(listaCompleta)
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Error al cargar inventario'
-            setError(msg)
+            setError(
+                msg === 'Failed to fetch'
+                    ? 'No hay conexión con el servidor en este momento. Intenta nuevamente.'
+                    : msg
+            )
         } finally {
             setCargando(false)
         }
@@ -121,7 +131,11 @@ export default function InventarioPage() {
             cerrarModal()
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Error al registrar entrada'
-            setError(msg)
+            setError(
+                msg === 'Failed to fetch'
+                    ? 'No hay conexión con el servidor. No se pudo registrar la entrada de stock.'
+                    : msg
+            )
         } finally {
             setGuardando(false)
         }
@@ -190,7 +204,7 @@ export default function InventarioPage() {
                 <p className="text-center text-slate-500 py-10">
                     Consultando inventario...
                 </p>
-            ) : (
+            ) : error && inventarios.length === 0 ? null : (
                 <div className="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200">
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-slate-800 text-white text-sm">

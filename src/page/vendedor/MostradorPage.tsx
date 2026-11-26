@@ -21,9 +21,17 @@ export default function MostradorPage() {
 
   const cargarProductos = () => {
     setCargando(true)
+    setError(null)
     obtenerProductos()
       .then((data) => setProductos(data.filter((p) => p.activo)))
-      .catch((err) => setError(err.message))
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Error al cargar productos'
+        setError(
+          msg === 'Failed to fetch'
+            ? 'No hay conexión con el servidor en este momento. Intenta nuevamente.'
+            : msg
+        )
+      })
       .finally(() => setCargando(false))
   }
 
@@ -143,7 +151,11 @@ export default function MostradorPage() {
       cargarProductos()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al procesar venta'
-      setError(msg)
+      setError(
+        msg === 'Failed to fetch'
+          ? 'No hay conexión con el servidor. No se pudo cobrar la venta.'
+          : msg
+      )
     } finally {
       setProcesando(false)
     }
@@ -167,15 +179,29 @@ export default function MostradorPage() {
       )}
 
       {error && (
-        <div className="flex items-center justify-between bg-amber-50 border border-amber-300 border-l-4 border-l-amber-500 text-amber-900 p-4 rounded-lg shadow-sm">
+        <div
+          className={`flex items-center justify-between p-4 rounded-lg shadow-sm border border-l-4 ${
+            error.toLowerCase().includes('stock')
+              ? 'bg-amber-50 border-amber-300 border-l-amber-500 text-amber-900'
+              : 'bg-red-100 border-red-300 border-l-red-500 text-red-700'
+          }`}
+        >
           <div>
-            <span className="font-bold mr-1.5">Stock insuficiente:</span>
-            <span>{error.replace('Stock insuficiente para venta en mostrador de: ', '')}</span>
+            {error.toLowerCase().includes('stock') ? (
+              <>
+                <span className="font-bold mr-1.5">Stock insuficiente:</span>
+                <span>
+                  {error.replace('Stock insuficiente para venta en mostrador de: ', '')}
+                </span>
+              </>
+            ) : (
+              <span>{error}</span>
+            )}
           </div>
           <button
             type="button"
             onClick={() => setError(null)}
-            className="text-amber-600 hover:text-amber-800 font-bold px-2 cursor-pointer"
+            className="font-bold px-2 cursor-pointer opacity-75 hover:opacity-100"
           >
             ✕
           </button>

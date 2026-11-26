@@ -42,7 +42,11 @@ export default function RegistroPage() {
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : 'Error al registrar cuenta'
-      setError(msg)
+      setError(
+        msg === 'Failed to fetch'
+          ? 'No hay conexión con el servidor en este momento. Intenta crear tu cuenta nuevamente en unos segundos.'
+          : msg
+      )
     } finally {
       setCargando(false)
     }

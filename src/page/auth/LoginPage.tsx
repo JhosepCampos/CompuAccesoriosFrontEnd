@@ -36,7 +36,11 @@ export default function LoginPage() {
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : 'Credenciales inválidas'
-      setError(msg)
+      setError(
+        msg === 'Failed to fetch'
+          ? 'No hay conexión con el servidor en este momento. Intenta ingresar nuevamente en unos segundos.'
+          : msg
+      )
     } finally {
       setCargando(false)
     }

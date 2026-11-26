@@ -25,9 +25,17 @@ export default function CatalogoPage() {
         setCategorias(dataCategorias.filter((c) => c.activo))
         setMarcas(dataMarcas.filter((m) => m.activo))
       })
-      .catch((err) => setError(err.message))
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Error al cargar el catálogo'
+        setError(
+          msg === 'Failed to fetch'
+            ? 'No pudimos cargar el catálogo en este momento. Por favor, intenta nuevamente en unos segundos.'
+            : msg
+        )
+      })
       .finally(() => setCargando(false))
   }, [])
+
 
   const productosFiltrados = productos.filter((producto) => {
     const coincideTexto =
@@ -46,7 +54,7 @@ export default function CatalogoPage() {
   })
 
   const handleAgregarCarrito = (producto: Producto) => {
-    agregarAlCarrito(producto)    
+    agregarAlCarrito(producto)
 
     setToast(`"${producto.nombre}" se agregó al carrito`)
     setTimeout(() => {
@@ -102,13 +110,14 @@ export default function CatalogoPage() {
       </div>
 
       {error && (
-        <div className="bg-red-100 text-red-700 p-4 rounded-lg">
-          {error} (Verifica CORS en /productos, /categorias y /marcas)
+        <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-lg">
+          {error}
         </div>
       )}
 
+
       {/* Grid de tarjetas */}
-      {productosFiltrados.length === 0 ? (
+      {error ? null : productosFiltrados.length === 0 ? (
         <p className="text-slate-500 text-center py-8">
           No hay productos disponibles con estos filtros.
         </p>
@@ -121,11 +130,15 @@ export default function CatalogoPage() {
               ? producto.stockFisico! - producto.reservado!
               : null
             const sinStock = tieneDatosStock ? stockDisponible! <= 0 : false
-            
+
+            const SIN_IMAGEN =
+              "data:image/svg+xml;utf8,%3Csvg xmlns='http://w3.org' width='600' height='400' viewBox='0 0 600 400'%3E%3Crect fill='%23e2e8f0' width='600' height='400'/%3E%3Ctext fill='%2364748b' font-family='sans-serif' font-size='28' font-weight='bold' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3ESin Imagen%3C/text%3E%3C/svg%3E";
+
+
             const urlImagen =
               producto.imagen && producto.imagen !== 'general'
                 ? producto.imagen
-                : 'https://placehold.co'
+                : SIN_IMAGEN;
 
             return (
               <div
@@ -137,8 +150,7 @@ export default function CatalogoPage() {
                     src={urlImagen}
                     alt={producto.nombre}
                     onError={(e) => {
-                      e.currentTarget.onerror = null
-                      e.currentTarget.src = 'https://placehold.co'
+                      e.currentTarget.src = SIN_IMAGEN;
                     }}
                     className="w-full h-44 object-cover bg-slate-100"
                   />

@@ -31,7 +31,12 @@ export default function GestionPedidosPage() {
       setPedidos(data)
       window.dispatchEvent(new Event('pedidosActualizados'))
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al cargar pedidos')
+      const msg = err instanceof Error ? err.message : 'Error al cargar pedidos'
+      setError(
+        msg === 'Failed to fetch'
+          ? 'No hay conexión con el servidor en este momento. Intenta nuevamente.'
+          : msg
+      )
     } finally {
       setCargando(false)
     }
@@ -106,7 +111,11 @@ export default function GestionPedidosPage() {
       window.dispatchEvent(new Event('pedidosActualizados'))
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al actualizar estado'
-      setError(msg)
+      setError(
+        msg === 'Failed to fetch'
+          ? 'No hay conexión con el servidor. No se pudo actualizar el estado del pedido.'
+          : msg
+      )
     } finally {
       setProcesandoId(null)
     }
@@ -122,9 +131,15 @@ export default function GestionPedidosPage() {
       try {
         const dets = await listarDetallesPedido(pedidoId)
         setDetallesMap((prev) => ({ ...prev, [pedidoId]: dets }))
-      } catch (err) {
-        console.error(err)
-      }
+      } catch (err: unknown) {
+      setPedidoExpandido(null)
+      const msg = err instanceof Error ? err.message : 'Error al cargar detalles'
+      setError(
+        msg === 'Failed to fetch'
+          ? 'No hay conexión con el servidor para ver los productos del pedido.'
+          : msg
+      )
+    }
     }
   }
 
@@ -204,7 +219,7 @@ export default function GestionPedidosPage() {
         <p className="text-center text-slate-500 py-10">
           Cargando bandeja de pedidos...
         </p>
-      ) : pedidosFiltrados.length === 0 ? (
+       ) : error && pedidos.length === 0 ? null : pedidosFiltrados.length === 0 ? (
         <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 text-center text-slate-500">
           No hay pedidos en curso. Usa el buscador superior para consultar un ID.
         </div>

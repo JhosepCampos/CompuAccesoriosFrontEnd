@@ -32,3 +32,12 @@ export const registrarEntradaInventario = async (
 
   return res.json()
 }
+
+export const obtenerTodoElInventario = async (): Promise<InventarioDto[]> => {
+  const res = await fetch(API_URL)
+  if (!res.ok) {
+    throw new Error('Error al obtener el inventario completo')
+  }
+  return res.json()
+}
+

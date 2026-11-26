@@ -30,7 +30,11 @@ export default function CategoriaMarcaPage() {
             setMarcas(marcs)
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Error al cargar datos'
-            setError(msg)
+            setError(
+                msg === 'Failed to fetch'
+                    ? 'No hay conexión con el servidor en este momento. Intenta nuevamente.'
+                    : msg
+            )
         } finally {
             setCargando(false)
         }
@@ -65,7 +69,11 @@ export default function CategoriaMarcaPage() {
         } catch (err: unknown) {
             const msg =
                 err instanceof Error ? err.message : 'Error al registrar categoría'
-            setError(msg)
+            setError(
+                msg === 'Failed to fetch'
+                    ? 'No hay conexión con el servidor. No se pudo registrar la categoría.'
+                    : msg
+            )
         } finally {
             setGuardandoCat(false)
         }
@@ -95,7 +103,11 @@ export default function CategoriaMarcaPage() {
             setMensajeExito(`Marca "${creada.nombre}" registrada con éxito.`)
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Error al registrar marca'
-            setError(msg)
+            setError(
+                msg === 'Failed to fetch'
+                    ? 'No hay conexión con el servidor. No se pudo registrar la marca.'
+                    : msg
+            )
         } finally {
             setGuardandoMarca(false)
         }
@@ -128,7 +140,7 @@ export default function CategoriaMarcaPage() {
                 <p className="text-center text-slate-500 py-10">
                     Cargando categorías y marcas...
                 </p>
-            ) : (
+            ) : error && categorias.length === 0 && marcas.length === 0 ? null : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Columna Izquierda: Categorías */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">

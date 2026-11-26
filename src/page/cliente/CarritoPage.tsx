@@ -85,7 +85,11 @@ export default function CarritoPage() {
             )
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Error inesperado'
-            setError(msg)
+            setError(
+                msg === 'Failed to fetch'
+                    ? 'No hay conexión con el servidor en este momento. Tu carrito sigue guardado; intenta confirmar nuevamente en unos segundos.'
+                    : msg
+            )
         } finally {
             setEnviando(false)
         }

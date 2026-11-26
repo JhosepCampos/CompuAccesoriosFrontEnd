@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, Navigate, NavLink } from 'react-router-dom'
 import { obtenerSesion, cerrarSesion } from '../service/usuarioService'
 import type { UsuarioDto } from '../type/usuario'
 
@@ -54,6 +54,12 @@ export default function AppRouter() {
         }
     }, [])
 
+    const claseEnlace = ({ isActive }: { isActive: boolean }) =>
+        `px-3 py-1.5 rounded-lg text-sm font-medium transition ${isActive
+            ? 'bg-slate-800 text-blue-400 ring-1 ring-slate-700'
+            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+        }`
+
     const rol = usuario?.rol?.nombre?.toUpperCase()
 
     const handleCerrarSesion = () => {
@@ -76,11 +82,11 @@ export default function AppRouter() {
 
     const [pedidosPendientes, setPedidosPendientes] = useState<number>(0)
 
-    const actualizarContadorPedidos = async () => {       
+    const actualizarContadorPedidos = async () => {
         if (rol !== 'VENDEDOR' && rol !== 'ADMINISTRADOR') return
 
         try {
-            const lista = await obtenerTodosLosPedidos()            
+            const lista = await obtenerTodosLosPedidos()
             const activos = lista.filter(
                 (p) => p.estado !== 'ENTREGADO' && p.estado !== 'CANCELADO'
             ).length
@@ -123,35 +129,35 @@ export default function AppRouter() {
         <BrowserRouter>
             {/* Menú superior dinámico según el rol */}
             <nav className="bg-slate-900 text-white px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-                <Link to="/catalogo" className="text-xl font-bold text-blue-400">
+                <NavLink to="/catalogo" className={claseEnlace}>
                     CompuAccesorios
-                </Link>
+                </NavLink>
 
                 <div className="flex flex-wrap items-center gap-5 text-sm">
                     {/* Opciones públicas / Cliente */}
                     {(!rol || rol === 'CLIENTE') && (
                         <>
-                            <Link to="/catalogo" className="hover:text-blue-400 transition">
+                            <NavLink to="/catalogo" className={claseEnlace}>
                                 Catalogo
-                            </Link>
-                            <Link to="/carrito" className="hover:text-blue-400 transition flex items-center gap-1.5">
+                            </NavLink>
+                            <NavLink to="/carrito" className={claseEnlace}>
                                 <span>Carrito</span>
                                 {cantidadCarrito > 0 && (
                                     <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                                         {cantidadCarrito}
                                     </span>
                                 )}
-                            </Link>
+                            </NavLink>
 
                             {rol === 'CLIENTE' && (
-                                <Link to="/mi-pedido" className="hover:text-blue-400 transition flex items-center gap-1.5">
+                                <NavLink to="/mi-pedido" className={claseEnlace}>
                                     <span>Mi Pedido</span>
                                     {misPedidosPendientes > 0 && (
                                         <span className="bg-amber-500 text-slate-950 text-xs font-bold px-2 py-0.5 rounded-full">
                                             {misPedidosPendientes}
                                         </span>
                                     )}
-                                </Link>
+                                </NavLink>
                             )}
                         </>
                     )}
@@ -159,17 +165,17 @@ export default function AppRouter() {
                     {/* Opciones de Vendedor (y Administrador) */}
                     {(rol === 'VENDEDOR' || rol === 'ADMINISTRADOR') && (
                         <>
-                            <Link to="/mostrador" className="hover:text-blue-400 transition">
+                            <NavLink to="/mostrador" className={claseEnlace}>
                                 Mostrador
-                            </Link>
-                            <Link to="/gestion-pedido" className="hover:text-blue-400 transition flex items-center gap-1.5">
+                            </NavLink>
+                            <NavLink to="/gestion-pedido" className={claseEnlace}>
                                 <span>Gestión Pedido</span>
                                 {pedidosPendientes > 0 && (
                                     <span className="bg-amber-500 text-slate-950 text-xs font-bold px-2 py-0.5 rounded-full">
                                         {pedidosPendientes}
                                     </span>
                                 )}
-                            </Link>
+                            </NavLink>
 
                         </>
                     )}
@@ -177,24 +183,24 @@ export default function AppRouter() {
                     {/* Opciones exclusivas de Administrador */}
                     {rol === 'ADMINISTRADOR' && (
                         <>
-                            <Link to="/inventario" className="hover:text-blue-400 transition">
+                            <NavLink to="/inventario" className={claseEnlace}>
                                 Inventario
-                            </Link>
-                            <Link to="/producto" className="hover:text-blue-400 transition">
+                            </NavLink>
+                            <NavLink to="/producto" className={claseEnlace}>
                                 Producto
-                            </Link>
-                            <Link to="/categoria-marca" className="hover:text-blue-400 transition">
+                            </NavLink>
+                            <NavLink to="/categoria-marca" className={claseEnlace}>
                                 Categoria / Marca
-                            </Link>
-                            <Link to="/reporte-venta" className="hover:text-blue-400 transition">
+                            </NavLink>
+                            <NavLink to="/reporte-venta" className={claseEnlace}>
                                 Reporte Venta
-                            </Link>
-                            <Link to="/usuario" className="hover:text-blue-400 transition">
+                            </NavLink>
+                            <NavLink to="/usuario" className={claseEnlace}>
                                 Usuario
-                            </Link>
-                            <Link to="/rol" className="hover:text-blue-400 transition">
+                            </NavLink>
+                            <NavLink to="/rol" className={claseEnlace}>
                                 Rol
-                            </Link>
+                            </NavLink>
                         </>
                     )}
 
@@ -213,15 +219,12 @@ export default function AppRouter() {
                         </div>
                     ) : (
                         <div className="flex items-center gap-3 pl-4 border-l border-slate-700">
-                            <Link to="/login" className="hover:text-blue-400 transition font-semibold">
+                            <NavLink to="/login" className={claseEnlace}>
                                 Login
-                            </Link>
-                            <Link
-                                to="/registro"
-                                className="bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded font-semibold"
-                            >
+                            </NavLink>
+                            <NavLink to="/registro" className={claseEnlace}>
                                 Registro
-                            </Link>
+                            </NavLink>
                         </div>
                     )}
                 </div>

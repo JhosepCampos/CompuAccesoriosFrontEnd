@@ -47,7 +47,11 @@ export default function ProductoPage() {
       setMarcas(marcs.filter((m) => m.activo))
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al cargar datos'
-      setError(msg)
+      setError(
+        msg === 'Failed to fetch'
+          ? 'No hay conexión con el servidor en este momento. Intenta nuevamente.'
+          : msg
+      )
     } finally {
       setCargando(false)
     }
@@ -136,7 +140,11 @@ export default function ProductoPage() {
       cargarDatos()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al guardar'
-      setError(msg)
+      setError(
+        msg === 'Failed to fetch'
+          ? 'No hay conexión con el servidor. No se pudo guardar el producto.'
+          : msg
+      )
     } finally {
       setGuardando(false)
     }
@@ -156,7 +164,11 @@ export default function ProductoPage() {
       setMensajeExito(`Producto "${prod.nombre}" desactivado lógicamente.`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al desactivar'
-      setError(msg)
+      setError(
+        msg === 'Failed to fetch'
+          ? 'No hay conexión con el servidor. No se pudo desactivar el producto.'
+          : msg
+      )
     }
   }
 
@@ -189,6 +201,7 @@ export default function ProductoPage() {
           <button
             type="button"
             onClick={abrirModalNuevo}
+            disabled={cargando || Boolean(error && productos.length === 0)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition"
           >
             + Nuevo Producto
@@ -212,7 +225,7 @@ export default function ProductoPage() {
         <p className="text-center text-slate-500 py-10">
           Cargando catálogo completo...
         </p>
-      ) : (
+      ) : error && productos.length === 0 ? null : (
         <div className="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200">
           <table className="w-full text-left border-collapse">
             <thead className="bg-slate-800 text-white text-sm">
@@ -253,11 +266,10 @@ export default function ProductoPage() {
                   </td>
                   <td className="p-4 text-center">
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                        prod.activo
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${prod.activo
                           ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-red-100 text-red-700'
-                      }`}
+                        }`}
                     >
                       {prod.activo ? 'Activo' : 'Inactivo'}
                     </span>
@@ -460,11 +472,10 @@ export default function ProductoPage() {
                 <button
                   type="submit"
                   disabled={guardando}
-                  className={`px-4 py-2 text-sm font-semibold text-white rounded-lg cursor-pointer ${
-                    guardando
+                  className={`px-4 py-2 text-sm font-semibold text-white rounded-lg cursor-pointer ${guardando
                       ? 'bg-slate-400 cursor-not-allowed'
                       : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
+                    }`}
                 >
                   {guardando ? 'Guardando...' : 'Guardar Producto'}
                 </button>
