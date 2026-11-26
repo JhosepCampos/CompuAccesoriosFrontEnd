@@ -1,75 +1,42 @@
-# React + TypeScript + Vite
+Crear el proyecto: npm create vite@latest compu-accesorios -- --template react-ts
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# CompuAccesorios - Frontend Web
 
-Currently, two official plugins are available:
+Aplicación web SPA desarrollada con **React, TypeScript y Tailwind CSS** para la gestión comercial de **CompuAccesorios**, conectada a la API REST de Spring Boot.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tecnologías Utilizadas
+* **React 18** & **TypeScript**
+* **Vite** (Entorno de desarrollo y empaquetado)
+* **React Router DOM** (Navegación y protección de rutas por rol)
+* **Tailwind CSS** (Diseño responsivo)
 
-## React Compiler
+## Requisitos Previos
+1. Tener instalado **Node.js 18+** y **npm**.
+2. Tener el **Backend (`CompuAccesoriosBackEnd`)** ejecutándose en `http://localhost:8080` con los datos iniciales cargados.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Instalación y Ejecución
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com
+cd CompuAccesoriosFrontEnd
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+### 2. Instalar dependencias
+```bash
+npm install
 ```
+
+### 3. Iniciar servidor de desarrollo
+```bash
+npm run dev
+```
+Abre tu navegador en **`http://localhost:5173`**.
+
+## Credenciales de Prueba y Roles
+* **Administrador:** `admin@compuaccesorios.com` / `123456`
+  * Acceso a Inventario (alertas de stock bajo y entradas), Mantenimiento de Productos, Categorías/Marcas, Reporte de Ventas por fechas y Gestión de Usuarios.
+* **Vendedor:** *(Creado desde el módulo de Usuarios por el Administrador)*
+  * Acceso a Punto de Venta en Mostrador (cálculo de vuelto) y Gestión/Despacho de Pedidos Online.
+* **Cliente:** *(Puede registrarse directamente desde la pantalla `/registro`)*
+  * Acceso al Catálogo con filtros en tiempo real, Carrito persistente en `localStorage`, confirmación de pedidos e historial con opción de cancelación.
